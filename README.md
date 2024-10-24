@@ -1,8 +1,6 @@
 # COMP3271 Computer Graphics
 
-Welcome to the COMP3271 in year 2024-2025!
-
-Here is the code repository of HKU course COMP3271. Any commit and issue will be welcome.
+This is my code repository for HKU course COMP3271.
 
 Instructor: [Prof. Taku Komura](https://www.cs.hku.hk/index.php/people/academic-staff/taku)
 
