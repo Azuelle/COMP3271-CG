@@ -20,8 +20,12 @@ bool Sphere::Hit(const Ray &ray, HitRecord *hit_record) const {
 
     bool hits = false;
 
-    Vec diff = ray.o - o_;
+    // Point P on sphere's surface satisfies (P-O)^2 = R^2
+    // Substitute P for ray equation: (ray.o + t * ray.d - O)^2 = R^2
+    // Organize the equation:
+    // ray.d^2 t^2 + 2 ray.d (ray.o - O) t + (ray.o - O)^2 - R^2 = 0
 
+    Vec diff = ray.o - o_;
     float a = glm::dot(ray.d, ray.d);
     float b = 2 * glm::dot(ray.d, diff);
     float c = glm::dot(diff, diff) - r_ * r_;
