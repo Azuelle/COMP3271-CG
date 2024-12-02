@@ -1,29 +1,49 @@
 #include "Hittable.h"
 
-
 // Sphere
 bool Sphere::Hit(const Ray &ray, HitRecord *hit_record) const {
     // TODO 1: Implement the intersection test between a ray and a sphere.
-    // You should return true if the ray intersects the sphere, and false otherwise.
-    // you could use the following member variables:
-    // o_: center of sphere
+    // You should return true if the ray intersects the sphere, and false
+    // otherwise. you could use the following member variables:
+    // o_: center of spher
     // r_: radius
     // material_: data structure storing the shading parameters
-    // You should also initialize the hit_record with the intersection information.
+    // You should also initialize the hit_record with the
+    // intersection information.
     // hit_record->position: the intersection position
     // hit_record->normal: the normal vector at the intersection position
-    // hit_record->distance: the distance from the ray's origin to the intersection position
+    // hit_record->distance: the distance from the ray's origin to the
+    // intersection position
     // hit_record->in_direction: the direction of the shoot in ray
     // hit_record->reflection: the direction of the reflected ray
     // hit_record->material: the material of the sphere
 
-    hit_record->material = material_;
-    return true;
+    bool hits = false;
+
+    Vec diff = ray.o - o_;
+
+    float a = glm::dot(ray.d, ray.d);
+    float b = 2 * glm::dot(ray.d, diff);
+    float c = glm::dot(diff, diff) - r_ * r_;
+
+    float delta = b * b - 4 * a * c;
+
+    hits = delta > 0;
+
+    if (hits) {
+        hit_record->position = ray.At((-b - glm::sqrt(delta)) / (2 * a));
+        hit_record->normal = glm::normalize(hit_record->position - o_);
+        Vec dist = hit_record->position - ray.o;
+        hit_record->distance = glm::dot(dist, dist);
+        hit_record->in_direction = ray.d;
+        hit_record->reflection = glm::reflect(ray.d, hit_record->normal);
+        hit_record->material = material_;
+    }
+    return hits;
 }
 
 // Quadric
 bool Quadric::Hit(const Ray &ray, HitRecord *hit_record) const {
-
     glm::vec4 D(ray.d, 0.f);
     glm::vec4 S(ray.o, 1.f);
 
@@ -36,38 +56,39 @@ bool Quadric::Hit(const Ray &ray, HitRecord *hit_record) const {
         return false;
     }
 
-    float t = glm::min((-b - glm::sqrt(delta)) / (2.f * a), (-b + glm::sqrt(delta)) / (2.f * a));
+    float t = glm::min((-b - glm::sqrt(delta)) / (2.f * a),
+                       (-b + glm::sqrt(delta)) / (2.f * a));
     if (t < 1e-3f) {
         return false;
     }
 
     Point hit_pos = ray.o + ray.d * t;
-    Vec normal = glm::normalize(glm::vec3((A_ + glm::transpose(A_)) * glm::vec4(hit_pos, 1.f)));
+    Vec normal = glm::normalize(
+        glm::vec3((A_ + glm::transpose(A_)) * glm::vec4(hit_pos, 1.f)));
     hit_record->position = hit_pos;
     hit_record->normal = normal;
     hit_record->distance = t;
     hit_record->in_direction = ray.d;
-    hit_record->reflection = ray.d - 2.f * glm::dot(ray.d, hit_record->normal) * hit_record->normal;
+    hit_record->reflection =
+        ray.d - 2.f * glm::dot(ray.d, hit_record->normal) * hit_record->normal;
     hit_record->material = material_;
     return true;
-
 }
 
 // Triangle
 bool Triangle::Hit(const Ray &ray, HitRecord *hit_record) const {
     // TODO 2: Implement the intersection test between a ray and a triangle.
-    // You should return true if the ray intersects the triangle, and false otherwise.
-    // you could use the following member variables:
-    // a_, b_, c_: vertices of triangle
-    // n_a_, n_b_, n_c_: corresponding vertex normal vectors
-    // phong_interpolation_: flag of using Phong shading or flat shading
+    // You should return true if the ray intersects the triangle, and false
+    // otherwise. you could use the following member variables: a_, b_, c_:
+    // vertices of triangle n_a_, n_b_, n_c_: corresponding vertex normal
+    // vectors phong_interpolation_: flag of using Phong shading or flat shading
 
-    // You should also initialize the hit_record with the intersection information.
-    // hit_record->position: the intersection position
+    // You should also initialize the hit_record with the intersection
+    // information. hit_record->position: the intersection position
     // hit_record->normal: the normal vector at the intersection position
-    // hit_record->distance: the distance from the ray's origin to the intersection position
-    // hit_record->in_direction: the direction of the shoot in ray
-    // hit_record->reflection: the direction of the reflected ray
+    // hit_record->distance: the distance from the ray's origin to the
+    // intersection position hit_record->in_direction: the direction of the
+    // shoot in ray hit_record->reflection: the direction of the reflected ray
 
     // Hint: possible functions you may use
     // glm::normalize
@@ -78,7 +99,8 @@ bool Triangle::Hit(const Ray &ray, HitRecord *hit_record) const {
 }
 
 // ---------------------------------------------------------------------------------------------
-// ------------------------------ no need to change --------------------------------------------
+// ------------------------------ no need to change
+// --------------------------------------------
 // ---------------------------------------------------------------------------------------------
 
 // CompleteTriangle
@@ -90,12 +112,12 @@ bool CompleteTriangle::Hit(const Ray &ray, HitRecord *hit_record) const {
     return ret;
 }
 
-
 // Mesh
-Mesh::Mesh(const std::string &file_path,
-           const Material &material,
-           bool phong_interpolation) :
-        ply_data_(file_path), material_(material), phong_interpolation_(phong_interpolation) {
+Mesh::Mesh(const std::string &file_path, const Material &material,
+           bool phong_interpolation)
+    : ply_data_(file_path),
+      material_(material),
+      phong_interpolation_(phong_interpolation) {
     std::vector<std::array<double, 3>> v_pos = ply_data_.getVertexPositions();
     vertices_.resize(v_pos.size());
 
@@ -106,9 +128,10 @@ Mesh::Mesh(const std::string &file_path,
     f_ind_ = ply_data_.getFaceIndices();
 
     // Calc face normals
-    for (const auto &face: f_ind_) {
-        Vec normal = glm::normalize(
-                glm::cross(vertices_[face[1]] - vertices_[face[0]], vertices_[face[2]] - vertices_[face[0]]));
+    for (const auto &face : f_ind_) {
+        Vec normal =
+            glm::normalize(glm::cross(vertices_[face[1]] - vertices_[face[0]],
+                                      vertices_[face[2]] - vertices_[face[0]]));
         face_normals_.emplace_back(normal);
     }
 
@@ -119,21 +142,22 @@ Mesh::Mesh(const std::string &file_path,
             vertex_normals_[f_ind_[i][j]] += face_normals_[i];
         }
     }
-    for (auto &vertex_normal: vertex_normals_) {
+    for (auto &vertex_normal : vertex_normals_) {
         vertex_normal = glm::normalize(vertex_normal);
     }
 
     // Construct hittable triangles
-    for (const auto &face: f_ind_) {
-        triangles_.emplace_back(vertices_[face[0]], vertices_[face[1]], vertices_[face[2]],
-                                vertex_normals_[face[0]], vertex_normals_[face[1]], vertex_normals_[face[2]],
-                                phong_interpolation_);
+    for (const auto &face : f_ind_) {
+        triangles_.emplace_back(vertices_[face[0]], vertices_[face[1]],
+                                vertices_[face[2]], vertex_normals_[face[0]],
+                                vertex_normals_[face[1]],
+                                vertex_normals_[face[2]], phong_interpolation_);
     }
 
     // Calc bounding box
     Point bbox_min(1e5f, 1e5f, 1e5f);
     Point bbox_max(-1e5f, -1e5f, -1e5f);
-    for (const auto &vertex: vertices_) {
+    for (const auto &vertex : vertices_) {
         bbox_min = glm::min(bbox_min, vertex - 1e-3f);
         bbox_max = glm::max(bbox_max, vertex + 1e-3f);
     }
@@ -149,7 +173,7 @@ Mesh::Mesh(const std::string &file_path,
     }
 
     area = 0.0f;
-    for (auto &triangle: triangles_) {
+    for (auto &triangle : triangles_) {
         area += triangle.getArea();
     }
     emission = material_.emission;
@@ -160,7 +184,7 @@ bool Mesh::Hit(const Ray &ray, HitRecord *hit_record) const {
     if (brute_force) {
         // Naive hit algorithm
         float min_dist = 1e5f;
-        for (const auto &triangle: triangles_) {
+        for (const auto &triangle : triangles_) {
             HitRecord curr_hit_record;
             if (triangle.Hit(ray, &curr_hit_record)) {
                 if (curr_hit_record.distance < min_dist) {
@@ -183,8 +207,9 @@ bool Mesh::Hit(const Ray &ray, HitRecord *hit_record) const {
     }
 }
 
-bool Mesh::IsFaceInsideBox(const std::vector<size_t> &face, const Point &bbox_min, const Point &bbox_max) const {
-    for (size_t idx: face) {
+bool Mesh::IsFaceInsideBox(const std::vector<size_t> &face,
+                           const Point &bbox_min, const Point &bbox_max) const {
+    for (size_t idx : face) {
         const auto &pt = vertices_[idx];
         for (int i = 0; i < 3; i++) {
             if (pt[i] < bbox_min[i] + 1e-6f) return false;
@@ -194,13 +219,15 @@ bool Mesh::IsFaceInsideBox(const std::vector<size_t> &face, const Point &bbox_mi
     return true;
 }
 
-bool Mesh::IsRayIntersectBox(const Ray &ray, const Point &bbox_min, const Point &bbox_max) const {
+bool Mesh::IsRayIntersectBox(const Ray &ray, const Point &bbox_min,
+                             const Point &bbox_max) const {
     float t_min = -1e5f;
     float t_max = 1e5f;
 
     for (int i = 0; i < 3; i++) {
         if (glm::abs(ray.d[i]) < 1e-6f) {
-            if (ray.o[i] < bbox_min[i] + 1e-6f || ray.o[i] > bbox_max[i] - 1e-6f) {
+            if (ray.o[i] < bbox_min[i] + 1e-6f ||
+                ray.o[i] > bbox_max[i] - 1e-6f) {
                 t_min = 1e5f;
                 t_max = -1e5f;
             }
@@ -231,9 +258,11 @@ void Mesh::InsertFace(OctreeNode *u, size_t face_idx) {
         for (size_t b = 0; b < 2; b++) {
             for (size_t c = 0; c < 2; c++) {
                 size_t child_idx = ((a << 2) | (b << 1) | c);
-                Point curr_bbox_min = bbox_min + half_bias * Vec(float(a), float(b), float(c));
+                Point curr_bbox_min =
+                    bbox_min + half_bias * Vec(float(a), float(b), float(c));
                 Point curr_bbox_max = curr_bbox_min + half_bias;
-                if (IsFaceInsideBox(f_ind_[face_idx], curr_bbox_min, curr_bbox_max)) {
+                if (IsFaceInsideBox(f_ind_[face_idx], curr_bbox_min,
+                                    curr_bbox_max)) {
                     if (u->childs[child_idx] == nullptr) {
                         tree_nodes_.emplace_back(new OctreeNode());
                         OctreeNode *child = tree_nodes_.back().get();
@@ -253,12 +282,13 @@ void Mesh::InsertFace(OctreeNode *u, size_t face_idx) {
     }
 }
 
-bool Mesh::OctreeHit(OctreeNode *u, const Ray &ray, HitRecord *hit_record) const {
+bool Mesh::OctreeHit(OctreeNode *u, const Ray &ray,
+                     HitRecord *hit_record) const {
     if (!IsRayIntersectBox(ray, u->bbox_min, u->bbox_max)) {
         return false;
     }
     float distance = 1e5f;
-    for (const auto &face_idx: u->face_index) {
+    for (const auto &face_idx : u->face_index) {
         HitRecord curr_hit_record;
         if (triangles_[face_idx].Hit(ray, &curr_hit_record)) {
             if (curr_hit_record.distance < distance) {
@@ -268,7 +298,7 @@ bool Mesh::OctreeHit(OctreeNode *u, const Ray &ray, HitRecord *hit_record) const
         }
     }
 
-    for (const auto &child: u->childs) {
+    for (const auto &child : u->childs) {
         if (child == nullptr) {
             continue;
         }
@@ -283,7 +313,6 @@ bool Mesh::OctreeHit(OctreeNode *u, const Ray &ray, HitRecord *hit_record) const
     return distance + 1 < 1e5f;
 }
 
-
 // Hittable list
 void HittableList::PushHittable(const Hittable &hittable) {
     hittable_list_.push_back(&hittable);
@@ -291,7 +320,7 @@ void HittableList::PushHittable(const Hittable &hittable) {
 
 bool HittableList::Hit(const Ray &ray, HitRecord *hit_record) const {
     float min_dist = 1e5f;
-    for (const auto &hittable: hittable_list_) {
+    for (const auto &hittable : hittable_list_) {
         HitRecord curr_hit_record;
         if (hittable->Hit(ray, &curr_hit_record)) {
             if (curr_hit_record.distance < min_dist) {
