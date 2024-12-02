@@ -79,16 +79,20 @@ bool Quadric::Hit(const Ray &ray, HitRecord *hit_record) const {
 bool Triangle::Hit(const Ray &ray, HitRecord *hit_record) const {
     // TODO 2: Implement the intersection test between a ray and a triangle.
     // You should return true if the ray intersects the triangle, and false
-    // otherwise. you could use the following member variables: a_, b_, c_:
-    // vertices of triangle n_a_, n_b_, n_c_: corresponding vertex normal
-    // vectors phong_interpolation_: flag of using Phong shading or flat shading
+    // otherwise.
+    // you could use the following member variables:
+    // a_, b_, c_: vertices of triangle
+    // n_a_, n_b_, n_c_: corresponding vertex normal vectors
+    // phong_interpolation_: flag of using Phong shading or flat shading
 
     // You should also initialize the hit_record with the intersection
-    // information. hit_record->position: the intersection position
+    // information.
+    // hit_record->position: the intersection position
     // hit_record->normal: the normal vector at the intersection position
     // hit_record->distance: the distance from the ray's origin to the
-    // intersection position hit_record->in_direction: the direction of the
-    // shoot in ray hit_record->reflection: the direction of the reflected ray
+    // intersection position
+    // hit_record->in_direction: the direction of the shoot in ray
+    // hit_record->reflection: the direction of the reflected ray
 
     // Hint: possible functions you may use
     // glm::normalize
