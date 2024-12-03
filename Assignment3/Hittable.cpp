@@ -43,8 +43,7 @@ bool Sphere::Hit(const Ray &ray, HitRecord *hit_record) const {
 
     hit_record->position = ray.At(t);
     hit_record->normal = glm::normalize(hit_record->position - o_);
-    Vec dist = hit_record->position - ray.o;
-    hit_record->distance = glm::dot(dist, dist);
+    hit_record->distance = t;
     hit_record->in_direction = ray.d;
     hit_record->reflection = glm::reflect(ray.d, hit_record->normal);
     hit_record->material = material_;
@@ -109,6 +108,49 @@ bool Triangle::Hit(const Ray &ray, HitRecord *hit_record) const {
     // glm::cross
     // glm::dot
     // glm::length
+
+    Vec ab = b_ - a_;
+    Vec ac = c_ - a_;
+    Vec bc = c_ - b_;
+    Vec norm = glm::normalize(glm::cross(ab, ac));
+
+    float D = glm::dot(ray.o - a_, norm);
+    float t = -(glm::dot(norm, ray.d) + D) / glm::dot(norm, ray.d);
+
+    if (t < 1e-3f) {
+        return false;
+    }
+
+    float area = glm::length(glm::cross(ab, ac)) * 0.5f;
+
+    Vec point = ray.At(t);
+
+    Vec ap = point - a_;
+    Vec bp = point - b_;
+    Vec cp = point - c_;
+
+    Vec s_abp = glm::cross(ab, ap);
+    Vec s_bcp = glm::cross(bc, bp);
+    Vec s_acp = glm::cross(-ac, cp);
+
+    if (glm::dot(s_abp, s_bcp) < 1e-3f || glm::dot(s_abp, s_acp) < 1e-3f) {
+        return false;
+    }
+
+    float a = glm::length(s_bcp) / 2.f / area;
+    float b = glm::length(s_acp) / 2.f / area;
+    float c = glm::length(s_abp) / 2.f / area;
+
+    if (phong_interpolation_)
+        hit_record->normal = glm::normalize(a * n_a_ + b * n_b_ + c * n_c_);
+    else
+        hit_record->normal = norm;
+
+    hit_record->position = point;
+    hit_record->distance = t;
+    hit_record->in_direction = ray.d;
+    hit_record->reflection = glm::reflect(ray.d, hit_record->normal);
+
     return true;
 }
 
