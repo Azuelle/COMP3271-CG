@@ -18,8 +18,6 @@ bool Sphere::Hit(const Ray &ray, HitRecord *hit_record) const {
     // hit_record->reflection: the direction of the reflected ray
     // hit_record->material: the material of the sphere
 
-    bool hits = false;
-
     // Point P on sphere's surface satisfies (P-O)^2 = R^2
     // Substitute P for ray equation: (ray.o + t * ray.d - O)^2 = R^2
     // Organize the equation:
@@ -44,8 +42,9 @@ bool Sphere::Hit(const Ray &ray, HitRecord *hit_record) const {
     hit_record->position = ray.At(t);
     hit_record->normal = glm::normalize(hit_record->position - o_);
     hit_record->distance = t;
-    hit_record->in_direction = ray.d;
-    hit_record->reflection = glm::reflect(ray.d, hit_record->normal);
+    hit_record->in_direction = glm::normalize(ray.d);
+    hit_record->reflection =
+        glm::normalize(glm::reflect(ray.d, hit_record->normal));
     hit_record->material = material_;
 
     return true;
@@ -114,8 +113,11 @@ bool Triangle::Hit(const Ray &ray, HitRecord *hit_record) const {
     Vec bc = c_ - b_;
     Vec norm = glm::normalize(glm::cross(ab, ac));
 
-    float D = glm::dot(ray.o - a_, norm);
-    float t = -(glm::dot(norm, ray.d) + D) / glm::dot(norm, ray.d);
+    if (glm::dot(ray.d, norm) < 1e-5f) return false;
+
+    Vec s = ray.o - a_;
+    float D = glm::dot(s, norm);
+    float t = (D / glm::dot(ray.d, norm));
 
     if (t < 1e-3f) {
         return false;
@@ -133,7 +135,8 @@ bool Triangle::Hit(const Ray &ray, HitRecord *hit_record) const {
     Vec s_bcp = glm::cross(bc, bp);
     Vec s_acp = glm::cross(-ac, cp);
 
-    if (glm::dot(s_abp, s_bcp) < 1e-3f || glm::dot(s_abp, s_acp) < 1e-3f) {
+    if (glm::dot(norm, s_abp) < 0 || glm::dot(norm, s_bcp) < 0 ||
+        glm::dot(norm, s_acp) < 0) {
         return false;
     }
 
