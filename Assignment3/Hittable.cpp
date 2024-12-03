@@ -27,23 +27,29 @@ bool Sphere::Hit(const Ray &ray, HitRecord *hit_record) const {
 
     Vec diff = ray.o - o_;
     float a = glm::dot(ray.d, ray.d);
-    float b = 2 * glm::dot(ray.d, diff);
+    float b = 2.f * glm::dot(ray.d, diff);
     float c = glm::dot(diff, diff) - r_ * r_;
 
     float delta = b * b - 4 * a * c;
 
-    hits = delta > 0;
-
-    if (hits) {
-        hit_record->position = ray.At((-b - glm::sqrt(delta)) / (2 * a));
-        hit_record->normal = glm::normalize(hit_record->position - o_);
-        Vec dist = hit_record->position - ray.o;
-        hit_record->distance = glm::dot(dist, dist);
-        hit_record->in_direction = ray.d;
-        hit_record->reflection = glm::reflect(ray.d, hit_record->normal);
-        hit_record->material = material_;
+    if (delta < 1e-5f) {
+        return false;
     }
-    return hits;
+    float t = glm::min((-b - glm::sqrt(delta)) / (2.f * a),
+                       (-b + glm::sqrt(delta)) / (2.f * a));
+    if (t < 1e-3f) {
+        return false;
+    }
+
+    hit_record->position = ray.At(t);
+    hit_record->normal = glm::normalize(hit_record->position - o_);
+    Vec dist = hit_record->position - ray.o;
+    hit_record->distance = glm::dot(dist, dist);
+    hit_record->in_direction = ray.d;
+    hit_record->reflection = glm::reflect(ray.d, hit_record->normal);
+    hit_record->material = material_;
+
+    return true;
 }
 
 // Quadric
